@@ -21,7 +21,6 @@ type ItemNode = {
   id: number;
   rect: ReturnType<typeof createRef<Rect>>;
   positionText: ReturnType<typeof createRef<Txt>>;
-  y: number;
   position: number;
 };
 
@@ -30,8 +29,8 @@ export default makeScene2D(function* (view) {
 
   const items: ItemNode[] = [];
 
-  const startY = -320;
-  const gap = 70;
+  const startY = -400;
+  const gap = 60;
 
   // =====================================================
   // TITLE
@@ -43,7 +42,7 @@ export default makeScene2D(function* (view) {
     <Txt
       ref={title}
       text={'Fractional Indexing'}
-      y={-470}
+      y={-500}
       fontSize={44}
       fill={'white'}
       opacity={0}
@@ -54,10 +53,10 @@ export default makeScene2D(function* (view) {
   yield* title().opacity(1, 1);
 
   // =====================================================
-  // CREATE INITIAL LIST
+  // CREATE INITIAL LIST (15 ITEMS)
   // =====================================================
 
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 15; i++) {
     const rect = createRef<Rect>();
     const positionText = createRef<Txt>();
 
@@ -67,7 +66,6 @@ export default makeScene2D(function* (view) {
       id: i + 1,
       rect,
       positionText,
-      y: startY + i * gap,
       position,
     });
 
@@ -75,7 +73,7 @@ export default makeScene2D(function* (view) {
       <Rect
         ref={rect}
         width={500}
-        height={52}
+        height={48}
         radius={10}
         fill={'#182031'}
         stroke={'#2c3954'}
@@ -151,7 +149,7 @@ export default makeScene2D(function* (view) {
       width={620}
       height={180}
       x={500}
-      y={-120}
+      y={-200}
       radius={18}
       fill={'#101827'}
       stroke={'#06b6d4'}
@@ -186,7 +184,21 @@ export default makeScene2D(function* (view) {
   // =====================================================
 
   yield* all(
-    moving.rect().x(-40, 0.8),
+    moving.rect().x(-40, 0.6),
+    moving.rect().zIndex(100),
+  );
+
+  // SHIFT ITEMS 4-9 DOWN
+  yield* all(
+    ...items
+      .filter((i) => i.id >= 4 && i.id <= 9)
+      .map((item) =>
+        item.rect().y(item.rect().y() + gap, 0.8, easeInOutCubic),
+      ),
+  );
+
+  yield* all(
+    moving.rect().x(-180, 1),
     moving.rect().y(
       startY + 3 * gap,
       1,
@@ -215,7 +227,7 @@ export default makeScene2D(function* (view) {
       width={620}
       height={160}
       x={500}
-      y={120}
+      y={0}
       radius={18}
       fill={'#06281d'}
       stroke={'#10b981'}
@@ -259,7 +271,7 @@ export default makeScene2D(function* (view) {
     <Txt
       ref={problemTitle}
       text={'But repeated inserts create precision issues'}
-      y={370}
+      y={320}
       fill={'#f87171'}
       fontSize={34}
       opacity={0}
@@ -275,8 +287,7 @@ export default makeScene2D(function* (view) {
   // REPEATED INSERTS
   // =====================================================
 
-  const insertOrder = [8, 6, 9, 10, 12, 14, 15];
-
+  const moveIds = [11, 12, 13, 14, 15];
   let currentTop = 3.0;
   let currentBottom = 3.5;
 
@@ -287,7 +298,7 @@ export default makeScene2D(function* (view) {
       ref={history}
       text={'3.5'}
       x={500}
-      y={320}
+      y={120}
       fill={'#fbbf24'}
       fontSize={28}
       lineHeight={42}
@@ -299,70 +310,52 @@ export default makeScene2D(function* (view) {
 
   yield* history().opacity(1, 0.5);
 
-  for (let step = 0; step < insertOrder.length; step++) {
-    const id = insertOrder[step];
+  // Track which items are currently in the gap or below it
+  const shiftedDownIds = [10, 4, 5, 6, 7, 8, 9];
+  let lastMovedNode = moving;
 
-    const newPosition =
-      (currentTop + currentBottom) / 2;
+  for (let step = 0; step < moveIds.length; step++) {
+    const id = moveIds[step];
+    const node = items.find(n => n.id === id)!;
 
-    const text =
-      step === 0
+    const newPosition = (currentTop + currentBottom) / 2;
+    const text = step === 0
         ? `3.5\n${newPosition}`
         : `${history().text()}\n${newPosition}`;
 
-    // fake floating precision growth
     currentBottom = newPosition;
 
-    // animate one item entering
-    const floating = createRef<Rect>();
-    const floatingText = createRef<Txt>();
-
-    view.add(
-      <Rect
-        ref={floating}
-        width={500}
-        height={52}
-        radius={10}
-        fill={'#f59e0b'}
-        stroke={'#fbbf24'}
-        lineWidth={2}
-        x={220}
-        y={-420}
-        opacity={0}
-      >
-        <Txt
-          text={`Item ${id}`}
-          x={-130}
-          fill={'black'}
-          fontSize={24}
-          fontFamily={'monospace'}
-        />
-
-        <Txt
-          ref={floatingText}
-          text={`position: ${newPosition}`}
-          x={120}
-          fill={'black'}
-          fontSize={22}
-          fontFamily={'monospace'}
-        />
-      </Rect>,
-    );
-
+    // Reset previous item and Highlight current one
     yield* all(
-      floating().opacity(1, 0.3),
-      floating().y(
-        startY + 3 * gap,
-        0.8,
-        easeInOutCubic,
-      ),
+      lastMovedNode.rect().fill('#182031', 0.4),
+      lastMovedNode.rect().scale(1, 0.4),
+      
+      node.rect().fill('#06b6d4', 0.4),
+      node.rect().scale(1.08, 0.4),
+      node.rect().zIndex(200 + step),
+      node.rect().x(-40, 0.5),
     );
 
-    yield* history().text(text, 0.5);
+    lastMovedNode = node;
 
-    yield* waitFor(0.25);
+    // Shift previous items down to avoid overlap
+    yield* all(
+        ...items
+            .filter(i => shiftedDownIds.includes(i.id))
+            .map(item => item.rect().y(item.rect().y() + gap, 0.5, easeInOutCubic))
+    );
 
-    yield* floating().opacity(0.15, 0.4);
+    shiftedDownIds.push(id);
+
+    // Move to gap and update text
+    yield* all(
+      node.rect().y(startY + 3 * gap, 0.8, easeInOutCubic),
+      node.rect().x(-180, 0.8),
+      node.positionText().text(`position: ${newPosition.toString().substring(0, 10)}`, 0.8),
+      history().text(text, 0.8),
+    );
+
+    yield* waitFor(0.2);
   }
 
   // =====================================================
