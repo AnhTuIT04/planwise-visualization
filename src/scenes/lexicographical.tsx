@@ -109,25 +109,25 @@ export default makeScene2D(function* (view) {
   yield* all(
     moving.rect().fill('#06b6d4', 0.5),
     moving.rect().scale(1.08, 0.5),
+    moving.positionText().fill('#000', 0.5),
   );
 
-  // SHOW GAP
-  const targetLine = createRef<Line>();
+  // ARROW FOR FIRST MOVE
+  const firstArrow = createRef<Line>();
   view.add(
     <Line
-      ref={targetLine}
+      ref={firstArrow}
       points={[
-        [120, startY + 0.5 * gap],
-        [120, startY + 1.5 * gap],
+        [120, startY + 9 * gap],
+        [120, startY + gap],
       ]}
       stroke={'#06b6d4'}
       lineWidth={6}
       endArrow
       opacity={0}
-    />,
+    />
   );
-
-  yield* targetLine().opacity(1, 0.5);
+  yield* firstArrow().opacity(1, 0.4);
 
   // FORMULA PANEL
   const formulaPanel = createRef<Rect>();
@@ -138,8 +138,8 @@ export default makeScene2D(function* (view) {
       ref={formulaPanel}
       width={620}
       height={180}
-      x={500}
-      y={-200}
+      x={550}
+      y={-280}
       radius={18}
       fill={'#101827'}
       stroke={'#06b6d4'}
@@ -189,6 +189,8 @@ export default makeScene2D(function* (view) {
     moving.positionText().text('pos: "an"', 0.8),
   );
 
+  yield* firstArrow().opacity(0, 0.5);
+
   yield* waitFor(1);
 
   // =====================================================
@@ -196,31 +198,48 @@ export default makeScene2D(function* (view) {
   // =====================================================
 
   yield* all(
-    formulaPanel().opacity(0.15, 0.5),
-    targetLine().opacity(0, 0.5),
+    formulaPanel().opacity(0, 0.5),
   );
 
-  const solutionTitle = createRef<Txt>();
+  const solutionPanel = createRef<Rect>();
   view.add(
-    <Txt
-      ref={solutionTitle}
-      text={'Strings can grow to avoid collisions'}
-      y={320}
-      fill={'#34d399'}
-      fontSize={34}
+    <Rect
+      ref={solutionPanel}
+      width={620}
+      height={160}
+      x={550}
+      y={-280}
+      radius={18}
+      fill={'#06281d'}
+      stroke={'#34d399'}
+      lineWidth={2}
       opacity={0}
-      fontFamily={'monospace'}
-    />
+    >
+      <Txt
+        text={'Infinite Growth'}
+        y={-30}
+        fill={'#34d399'}
+        fontSize={34}
+        fontFamily={'monospace'}
+      />
+      <Txt
+        text={'Strings grow to avoid collisions'}
+        y={30}
+        fill={'white'}
+        fontSize={26}
+        fontFamily={'monospace'}
+      />
+    </Rect>
   );
-  yield* solutionTitle().opacity(1, 0.8);
+  yield* solutionPanel().opacity(1, 0.8);
 
   const history = createRef<Txt>();
   view.add(
     <Txt
       ref={history}
       text={'"an"'}
-      x={500}
-      y={60}
+      x={550}
+      y={-10}
       fill={'#fbbf24'}
       fontSize={28}
       lineHeight={42}
@@ -243,15 +262,34 @@ export default makeScene2D(function* (view) {
 
     yield* history().text(`${history().text()}\n${nextPos}`, 0.6);
     
+    // ARROW FOR REPEATED MOVE
+    const arrow = createRef<Line>();
+    view.add(
+      <Line
+        ref={arrow}
+        points={[
+          [120, node.rect().y()],
+          [120, startY + gap],
+        ]}
+        stroke={'#06b6d4'}
+        lineWidth={6}
+        endArrow
+        opacity={0}
+      />
+    );
+
     // Reset previous item and Highlight current one
     yield* all(
         lastMovedNode.rect().fill('#182031', 0.4),
         lastMovedNode.rect().scale(1, 0.4),
+        lastMovedNode.positionText().fill('#94a3b8', 0.4),
 
         node.rect().fill('#06b6d4', 0.4),
         node.rect().scale(1.08, 0.4),
+        node.positionText().fill('#000', 0.4),
         node.rect().zIndex(200 + i),
         node.rect().x(-40, 0.5),
+        arrow().opacity(1, 0.4),
     );
 
     lastMovedNode = node;
@@ -270,6 +308,7 @@ export default makeScene2D(function* (view) {
         node.rect().y(startY + gap, 0.8, easeInOutCubic),
         node.rect().x(-180, 0.8),
         node.positionText().text(`pos: ${nextPos}`, 0.8),
+        arrow().opacity(0, 0.5),
     );
 
     yield* waitFor(0.2);
@@ -278,20 +317,35 @@ export default makeScene2D(function* (view) {
   // =====================================================
   // FINAL CONCLUSION
   // =====================================================
-  const conclusion = createRef<Txt>();
-  view.add(
-    <Txt
-      ref={conclusion}
-      text={'Infinite precision using string keys\nStandard for modern task managers'}
-      y={440}
-      fill={'#e2e8f0'}
-      fontSize={30}
-      lineHeight={46}
-      opacity={0}
-      fontFamily={'monospace'}
-    />
+  yield* all(
+      solutionPanel().opacity(0, 0.5),
+      history().opacity(0, 0.5),
   );
 
-  yield* conclusion().opacity(1, 1);
+  const conclusionPanel = createRef<Rect>();
+  view.add(
+    <Rect
+      ref={conclusionPanel}
+      width={680}
+      height={180}
+      x={550}
+      y={0}
+      radius={18}
+      fill={'#1a1220'}
+      stroke={'#e2e8f0'}
+      lineWidth={2}
+      opacity={0}
+    >
+      <Txt
+        text={'Standard for modern task managers\nInfinite precision with string keys'}
+        fill={'#e2e8f0'}
+        fontSize={28}
+        lineHeight={46}
+        fontFamily={'monospace'}
+      />
+    </Rect>
+  );
+
+  yield* conclusionPanel().opacity(1, 1);
   yield* waitFor(3);
 });

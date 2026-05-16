@@ -66,6 +66,7 @@ export default makeScene2D(function* (view) {
       id: i + 1,
       rect,
       positionText,
+      y: startY + i * gap,
       position,
     });
 
@@ -112,29 +113,25 @@ export default makeScene2D(function* (view) {
   yield* all(
     moving.rect().fill('#06b6d4', 0.5),
     moving.rect().scale(1.08, 0.5),
+    moving.positionText().fill('#000', 0.5),
   );
 
-  // =====================================================
-  // SHOW TARGET GAP
-  // =====================================================
-
-  const targetLine = createRef<Line>();
-
+  // ARROW FOR FIRST MOVE
+  const firstArrow = createRef<Line>();
   view.add(
     <Line
-      ref={targetLine}
+      ref={firstArrow}
       points={[
-        [120, startY + 2.5 * gap],
-        [120, startY + 3.5 * gap],
+        [120, startY + 9 * gap],
+        [120, startY + 3 * gap],
       ]}
       stroke={'#06b6d4'}
       lineWidth={6}
       endArrow
       opacity={0}
-    />,
+    />
   );
-
-  yield* targetLine().opacity(1, 0.5);
+  yield* firstArrow().opacity(1, 0.4);
 
   // =====================================================
   // SHOW FORMULA PANEL
@@ -148,8 +145,8 @@ export default makeScene2D(function* (view) {
       ref={formulaPanel}
       width={620}
       height={180}
-      x={500}
-      y={-200}
+      x={550}
+      y={-280}
       radius={18}
       fill={'#101827'}
       stroke={'#06b6d4'}
@@ -206,6 +203,8 @@ export default makeScene2D(function* (view) {
     ),
   );
 
+  yield* firstArrow().opacity(0, 0.5);
+
   yield* moving.positionText().text(
     'position: 3.5',
     0.8,
@@ -226,8 +225,8 @@ export default makeScene2D(function* (view) {
       ref={benefit}
       width={620}
       height={160}
-      x={500}
-      y={0}
+      x={550}
+      y={-80}
       radius={18}
       fill={'#06281d'}
       stroke={'#10b981'}
@@ -261,25 +260,43 @@ export default makeScene2D(function* (view) {
   // =====================================================
 
   yield* all(
-    formulaPanel().opacity(0.15, 0.5),
-    benefit().opacity(0.15, 0.5),
+    formulaPanel().opacity(0, 0.5),
+    benefit().opacity(0, 0.5),
   );
 
-  const problemTitle = createRef<Txt>();
+  const problemPanel = createRef<Rect>();
 
   view.add(
-    <Txt
-      ref={problemTitle}
-      text={'But repeated inserts create precision issues'}
-      y={320}
-      fill={'#f87171'}
-      fontSize={34}
+    <Rect
+      ref={problemPanel}
+      width={620}
+      height={160}
+      x={550}
+      y={-280}
+      radius={18}
+      fill={'#2a0f0f'}
+      stroke={'#ef4444'}
+      lineWidth={2}
       opacity={0}
-      fontFamily={'monospace'}
-    />,
+    >
+      <Txt
+        text={'The Precision Issue'}
+        y={-30}
+        fill={'#fca5a5'}
+        fontSize={34}
+        fontFamily={'monospace'}
+      />
+      <Txt
+        text={'Repeated inserts shrink the gap'}
+        y={30}
+        fill={'white'}
+        fontSize={26}
+        fontFamily={'monospace'}
+      />
+    </Rect>
   );
 
-  yield* problemTitle().opacity(1, 0.8);
+  yield* problemPanel().opacity(1, 0.8);
 
   yield* waitFor(0.5);
 
@@ -297,8 +314,8 @@ export default makeScene2D(function* (view) {
     <Txt
       ref={history}
       text={'3.5'}
-      x={500}
-      y={120}
+      x={550}
+      y={-10}
       fill={'#fbbf24'}
       fontSize={28}
       lineHeight={42}
@@ -325,15 +342,34 @@ export default makeScene2D(function* (view) {
 
     currentBottom = newPosition;
 
+    // ARROW FOR REPEATED MOVE
+    const arrow = createRef<Line>();
+    view.add(
+      <Line
+        ref={arrow}
+        points={[
+          [120, node.rect().y()],
+          [120, startY + 3 * gap],
+        ]}
+        stroke={'#06b6d4'}
+        lineWidth={6}
+        endArrow
+        opacity={0}
+      />
+    );
+
     // Reset previous item and Highlight current one
     yield* all(
       lastMovedNode.rect().fill('#182031', 0.4),
       lastMovedNode.rect().scale(1, 0.4),
+      lastMovedNode.positionText().fill('#94a3b8', 0.4),
       
       node.rect().fill('#06b6d4', 0.4),
       node.rect().scale(1.08, 0.4),
+      node.positionText().fill('#000', 0.4),
       node.rect().zIndex(200 + step),
       node.rect().x(-40, 0.5),
+      arrow().opacity(1, 0.4),
     );
 
     lastMovedNode = node;
@@ -353,6 +389,7 @@ export default makeScene2D(function* (view) {
       node.rect().x(-180, 0.8),
       node.positionText().text(`position: ${newPosition.toString().substring(0, 10)}`, 0.8),
       history().text(text, 0.8),
+      arrow().opacity(0, 0.5),
     );
 
     yield* waitFor(0.2);
@@ -367,9 +404,10 @@ export default makeScene2D(function* (view) {
   view.add(
     <Rect
       ref={precisionPanel}
-      width={700}
+      width={620}
       height={180}
-      y={430}
+      x={550}
+      y={220}
       radius={20}
       fill={'#2a0f0f'}
       stroke={'#ef4444'}
@@ -377,7 +415,7 @@ export default makeScene2D(function* (view) {
       opacity={0}
     >
       <Txt
-        text={'Eventually positions become:'}
+        text={'Eventually becomes:'}
         y={-48}
         fill={'#fca5a5'}
         fontSize={28}
@@ -385,7 +423,7 @@ export default makeScene2D(function* (view) {
       />
 
       <Txt
-        text={'3.000000000000000000xx'}
+        text={'3.000000000000xx'}
         y={30}
         fill={'white'}
         fontSize={34}
@@ -402,24 +440,38 @@ export default makeScene2D(function* (view) {
   // FINAL CONCLUSION
   // =====================================================
 
-  const finalText = createRef<Txt>();
-
-  view.add(
-    <Txt
-      ref={finalText}
-      text={
-        'Fractional indexing reduces updates\nbut floating-point precision eventually breaks down'
-      }
-      y={560}
-      fill={'#e2e8f0'}
-      fontSize={30}
-      lineHeight={46}
-      opacity={0}
-      fontFamily={'monospace'}
-    />,
+  yield* all(
+      problemPanel().opacity(0, 0.5),
+      history().opacity(0, 0.5),
+      precisionPanel().opacity(0, 0.5),
   );
 
-  yield* finalText().opacity(1, 1);
+  const conclusionPanel = createRef<Rect>();
 
-  yield* waitFor(2);
+  view.add(
+    <Rect
+      ref={conclusionPanel}
+      width={680}
+      height={180}
+      x={550}
+      y={0}
+      radius={18}
+      fill={'#1a1220'}
+      stroke={'#e2e8f0'}
+      lineWidth={2}
+      opacity={0}
+    >
+      <Txt
+        text={'Fractional indexing reduces updates\nbut breaks at extreme precision'}
+        fill={'#e2e8f0'}
+        fontSize={28}
+        lineHeight={46}
+        fontFamily={'monospace'}
+      />
+    </Rect>,
+  );
+
+  yield* conclusionPanel().opacity(1, 1);
+
+  yield* waitFor(3);
 });
