@@ -4,7 +4,13 @@ import ffmpeg from '@motion-canvas/ffmpeg';
 
 export default defineConfig({
   plugins: [
-    motionCanvas(),
+    motionCanvas({
+      project: [
+        './src/change-task-position.project.ts',
+        './src/calendar-integration.project.ts',
+        './src/change-task-status.project.ts',
+      ],
+    }),
     ffmpeg(),
   ],
 });
